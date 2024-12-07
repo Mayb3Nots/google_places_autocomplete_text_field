@@ -1,16 +1,14 @@
-library google_places_autocomplete_text_field;
+library;
 
 import 'dart:io';
 
+import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-
-import 'package:dio/dio.dart';
 import 'package:flutter/services.dart';
-import 'package:rxdart/rxdart.dart';
-
 import 'package:google_places_autocomplete_text_field/model/place_details.dart';
 import 'package:google_places_autocomplete_text_field/model/prediction.dart';
+import 'package:rxdart/rxdart.dart';
 
 class GooglePlacesAutoCompleteTextFormField extends StatefulWidget {
   final String? initialValue;
@@ -243,24 +241,24 @@ class _GooglePlacesAutoCompleteTextFormFieldState
 
   Future<void> getLocation(String text) async {
     final prefix = widget.proxyURL ?? "";
-    String url =
-        "${prefix}https://maps.googleapis.com/maps/api/place/autocomplete/json?input=$text&key=${widget.googleAPIKey}";
+    final base =
+        "https://maps.googleapis.com/maps/api/place/autocomplete/json?input=$text&key=${widget.googleAPIKey}";
+    String url = "$prefix${prefix.isNotEmpty ? Uri.encodeComponent(base) : base}";
 
     if (widget.countries != null) {
       for (int i = 0; i < widget.countries!.length; i++) {
         final country = widget.countries![i];
 
         if (i == 0) {
-          url = "$url&components=country:$country";
+          url = "$url&${Uri.encodeComponent('components=country:$country')}";
         } else {
-          url = "$url|country:$country";
+          url = "$url|${Uri.encodeComponent('country:$country')}";
         }
       }
     }
     final response = await _dio.get(url);
 
-    final subscriptionResponse =
-        PlacesAutocompleteResponse.fromJson(response.data);
+    final subscriptionResponse = PlacesAutocompleteResponse.fromJson(response.data);
 
     if (text.isEmpty) {
       allPredictions.clear();
@@ -347,11 +345,10 @@ class _GooglePlacesAutoCompleteTextFormFieldState
   Future<void> getPlaceDetailsFromPlaceId(Prediction prediction) async {
     try {
       final prefix = widget.proxyURL ?? "";
-      final url =
-          "${prefix}https://maps.googleapis.com/maps/api/place/details/json?placeid=${prediction.placeId}&key=${widget.googleAPIKey}";
-      final response = await _dio.get(
-        url,
-      );
+      final base =
+          'https://maps.googleapis.com/maps/api/place/details/json?placeid=${prediction.placeId}&key=${widget.googleAPIKey}';
+      final url = "$prefix${prefix.isNotEmpty ? Uri.encodeComponent(base) : base}";
+      final response = await _dio.get(url);
 
       final placeDetails = PlaceDetails.fromJson(response.data);
 
@@ -372,6 +369,5 @@ PlaceDetails parsePlaceDetailMap(Map responseBody) =>
     PlaceDetails.fromJson(responseBody as Map<String, dynamic>);
 
 typedef ItemClick = void Function(Prediction postalCodeResponse);
-typedef GetPlaceDetailswWithLatLng = void Function(
-    Prediction postalCodeResponse);
+typedef GetPlaceDetailswWithLatLng = void Function(Prediction postalCodeResponse);
 typedef OverlayContainer = Widget Function(Widget overlayChild);
