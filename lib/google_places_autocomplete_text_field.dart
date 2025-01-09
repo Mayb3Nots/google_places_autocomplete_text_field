@@ -254,7 +254,7 @@ class _GooglePlacesAutoCompleteTextFormFieldState
         }
       }
     }
-    final url = "$prefix${prefix.isNotEmpty ? Uri.encodeComponent(base) : base}";
+    final url = "$prefix$base";
 
     final response = await _dio.get(url);
 
