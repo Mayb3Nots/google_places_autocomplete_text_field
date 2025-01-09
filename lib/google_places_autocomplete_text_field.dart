@@ -241,22 +241,20 @@ class _GooglePlacesAutoCompleteTextFormFieldState
 
   Future<void> getLocation(String text) async {
     final prefix = widget.proxyURL ?? "";
+    var base =
+        "https://maps.googleapis.com/maps/api/place/autocomplete/json?input=$text&key=${widget.googleAPIKey}";
+    if (widget.countries != null) {
+      for (int i = 0; i < widget.countries!.length; i++) {
+        final country = widget.countries![i];
 
-    final queryParams = {
-      'input': text,
-      'key': widget.googleAPIKey,
-    };
-
-    if (widget.countries != null && widget.countries!.isNotEmpty) {
-      final components = widget.countries!.map((country) => 'country:$country').join('|');
-      queryParams['components'] = components;
+        if (i == 0) {
+          base = "$base&components=country:$country";
+        } else {
+          base = "$base|$country";
+        }
+      }
     }
-
-    var baseUrl = Uri.parse("https://maps.googleapis.com/maps/api/place/autocomplete/json")
-        .replace(queryParameters: queryParams)
-        .toString();
-
-    final url = prefix.isNotEmpty ? "$prefix${Uri.encodeComponent(baseUrl)}" : baseUrl;
+    final url = "$prefix${prefix.isNotEmpty ? Uri.encodeComponent(base) : base}";
 
     final response = await _dio.get(url);
 
