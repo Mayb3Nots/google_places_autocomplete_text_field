@@ -241,26 +241,23 @@ class _GooglePlacesAutoCompleteTextFormFieldState
 
   Future<void> getLocation(String text) async {
     final prefix = widget.proxyURL ?? "";
-    final base =
-        "https://maps.googleapis.com/maps/api/place/autocomplete/json?input=$text&key=${widget.googleAPIKey}";
 
-    String url = prefix.isNotEmpty ? "$prefix${Uri.encodeComponent(base)}" : base;
+    final queryParams = {
+      'input': text,
+      'key': widget.googleAPIKey,
+    };
 
-    if (widget.countries != null) {
-      for (int i = 0; i < widget.countries!.length; i++) {
-        final country = widget.countries![i];
-
-        final component = prefix.isNotEmpty
-            ? Uri.encodeComponent('components=country:$country')
-            : 'components=country:$country';
-
-        if (i == 0) {
-          url = "$url&$component";
-        } else {
-          url = "$url|$component";
-        }
-      }
+    if (widget.countries != null && widget.countries!.isNotEmpty) {
+      final components = widget.countries!.map((country) => 'country:$country').join('|');
+      queryParams['components'] = components;
     }
+
+    var baseUrl = Uri.parse("https://maps.googleapis.com/maps/api/place/autocomplete/json")
+        .replace(queryParameters: queryParams)
+        .toString();
+
+    final url = prefix.isNotEmpty ? "$prefix${Uri.encodeComponent(baseUrl)}" : baseUrl;
+
     final response = await _dio.get(url);
 
     final subscriptionResponse = PlacesAutocompleteResponse.fromJson(response.data);
@@ -352,8 +349,7 @@ class _GooglePlacesAutoCompleteTextFormFieldState
       final prefix = widget.proxyURL ?? "";
       final base =
           'https://maps.googleapis.com/maps/api/place/details/json?placeid=${prediction.placeId}&key=${widget.googleAPIKey}';
-
-      final url = prefix.isNotEmpty ? "$prefix${Uri.encodeComponent(base)}" : base;
+      final url = "$prefix${prefix.isNotEmpty ? Uri.encodeComponent(base) : base}";
       final response = await _dio.get(url);
 
       final placeDetails = PlaceDetails.fromJson(response.data);
